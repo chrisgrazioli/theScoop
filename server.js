@@ -262,8 +262,17 @@ function createComment(){
 }
 
 function getComments(url, request){
+  const response = {};
+  response.status = 200;
+  response.body = {
+    comments: Object.keys(database.comments)
+        .map(articleId => database.comments[commentId])
+        .filter(comment => comment)
+        .sort((comment1, comment2) => comment2.id - comment1.id)
+  };
 
-}
+  return response;
+}  
 
 function getComment(){
 
