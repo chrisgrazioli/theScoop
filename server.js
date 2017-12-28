@@ -30,11 +30,9 @@ const routes = {
     'PUT': downvoteArticle
   },
   '/comments' : {
-    'GET': getComments,
     'POST': createComment
   },
   '/comments/:id' : {
-    'GET': getComment,
     'PUT': updateComment,
     'DELETE': deleteComment
   },
@@ -256,26 +254,26 @@ function downvote(item, username) {
   }
   return item;
 }
-
-function createComment(){
-
-}
-
-function getComments(url, request){
+function createComment(url, request){
+  const requestComment= request.body && request.body.comment;
   const response = {};
-  response.status = 200;
-  response.body = {
-    comments: Object.keys(database.comments)
-        .map(articleId => database.comments[commentId])
-        .filter(comment => comment)
-        .sort((comment1, comment2) => comment2.id - comment1.id)
-  };
-
+  if (requestComment && requestComment.body && requestComment.username && requestComment.articleId && database.users[requestComment.username] ) {
+    const comment={
+      id: database.nextCommentId++,
+      body: requestComment.body,
+      username: requestComment.username,
+      articleId: requestComment.articleId,
+      upvotedBy: [],
+      downvotedBy: [],
+    };
+    database.comments[comment.id]=comment;
+    database.users[comment.username].commentIds.push(comment.id);
+    response.body = {comment:comment};
+    response.status = 201;
+  } else {
+    response.status=400;
+  }
   return response;
-}  
-
-function getComment(){
-
 }
 
 function updateComment(){
@@ -291,7 +289,7 @@ function upvoteComment(){
 }
 
 function downvoteComment(){
-  
+
 }
 
 // Write all code above this line.
