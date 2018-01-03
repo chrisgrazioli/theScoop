@@ -257,7 +257,7 @@ function downvote(item, username) {
 function createComment(url, request){
   const requestComment= request.body && request.body.comment;
   const response = {};
-  if (requestComment && requestComment.body && requestComment.username && requestComment.articleId && database.users[requestComment.username] ) {
+  if (requestComment && requestComment.body && requestComment.username && requestComment.articleId && database.users[requestComment.username] && database.articles[requestComment.articleId]) {
     const comment={
       id: database.nextCommentId++,
       body: requestComment.body,
@@ -266,30 +266,88 @@ function createComment(url, request){
       upvotedBy: [],
       downvotedBy: [],
     };
+
     database.comments[comment.id]=comment;
     database.users[comment.username].commentIds.push(comment.id);
+    database.articles[comment.articleId].commentIds.push(comment.id);
+
     response.body = {comment:comment};
     response.status = 201;
-  } else {
+  }else {
     response.status=400;
   }
   return response;
 }
 
-function updateComment(){
+function updateComment(url, request){
+  const id= Number(url.split('/').filter(segment => segment)[1]);
+  const savedComment= database.comments[id];
+  const requestComment= request.body && request.body.comment;
+  const response={};
 
+  if(!id || !requestComment || !requestComment.body){
+    response.status=400;
+  }else if (!savedComment) {
+    response.status=404;
+  }else {
+    database.comments[id].body= requestComment.body
+    response.body = {comment : savedComment};
+    response.status=200;
+  }
+  return response;
 }
 
-function deleteComment(){
+function deleteComment(url, request){
+  const id=Number(url.split('/').filter(segment => segment)[1]);
+  const savedComment= database.comments[id];
+  const response={};
 
+  if (savedComment) {
+    database.comments[id]=null;
+    //remove a deleted comment ID from the author's comment IDs
+    database.users[savedComment.username].commentIds.splice(database.users[savedComment.username].commentIds.indexOf(id) ,1);
+    //remove a deleted comment ID from the article's comment IDs
+    database.articles[id].commentIds.splice(database.articles[id].commentIds.indexOf(id) ,1);
+    response.status=204;
+  }else {
+    response.status=404;
+  }
+  return response;
 }
 
-function upvoteComment(){
+function upvoteComment(url, request){
+  const id = Number(url.split('/').filter(segment => segment)[1]);
+  const username = request.body && request.body.username;
+  let savedComments = database.comments[id];
+  const response = {};
 
+  if (savedComments && database.users[username]) {
+    savedComments = upvote(savedComments, username);
+
+    response.body = {comment: savedComments};
+    response.status = 200;
+  } else {
+    response.status = 400;
+  }
+
+  return response;
 }
 
-function downvoteComment(){
+function downvoteComment(url, request){
+  const id = Number(url.split('/').filter(segment => segment)[1]);
+  const username = request.body && request.body.username;
+  let savedComments = database.comments[id];
+  const response = {};
 
+  if (savedComments && database.users[username]) {
+    savedComments = downvote(savedComments, username);
+
+    response.body = {comment: savedComments};
+    response.status = 200;
+  } else {
+    response.status = 400;
+  }
+  return response;
 }
 
 // Write all code above this line.
