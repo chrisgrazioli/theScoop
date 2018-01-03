@@ -1,3 +1,7 @@
+// js-yaml library for save/load of database when server starts/stops
+ const yaml = require('js-yaml');
+ const fs = require('fs');
+ 
 // database is let instead of const to allow us to modify it in test.js
 let database = {
   users: {},
@@ -348,6 +352,30 @@ function downvoteComment(url, request){
     response.status = 400;
   }
   return response;
+}
+
+/*-----YAML stuff ???------ */
+//load and save database functions
+function loadDatabase() {
+  try {
+      if (fs.existsSync('./dataBase.yml')) {
+        console.log('loadDatabase funcion call');
+        return yaml.safeLoad(fs.readFileSync('dataBase.yml', 'utf8'));
+      } else {
+        return null;
+      }
+  } catch (e) {
+      console.log(e);
+  }
+  return false;
+}
+function saveDatabase() {
+  try {
+    fs.writeFileSync('dataBase.yml', yaml.safeDump(database), 'utf8');
+    console.log('saved?');
+  } catch (e) {
+    console.log(e);
+  }
 }
 
 // Write all code above this line.
